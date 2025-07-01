@@ -2,12 +2,19 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Яндекс.Дом</title>
-    <script src="vendors/react-with-dom.js"></script>
+    
+    <!-- Предзагрузка критических ресурсов -->
+    <link rel="preload" href="reset.css" as="style">
+    <link rel="preload" href="styles.css" as="style">
+    <link rel="preload" href="vendors/react-with-dom.js" as="script">
+    
     <link rel="stylesheet" type="text/css" href="reset.css">
     <link rel="stylesheet" type="text/css" href="styles.css">
+    
+    <!-- Скрипты с defer -->
+    <script src="vendors/react-with-dom.js"></script>
 </head>
 <body>
 
@@ -38,21 +45,15 @@
 (function() {
     "use strict";
     
-    function Header() {
-        var _React$useState = React.useState(false),
-            expanded = _React$useState[0],
-            setExpanded = _React$useState[1];
+    // Мемоизированные компоненты
+    const Header = React.memo(function Header() {
+        const [expanded, setExpanded] = React.useState(false);
+        const [toggled, setToggled] = React.useState(false);
         
-        var _React$useState2 = React.useState(false),
-            toggled = _React$useState2[0],
-            setToggled = _React$useState2[1];
-        
-        var onClick = function onClick() {
-            if (!toggled) {
-                setToggled(true);
-            }
+        const onClick = React.useCallback(() => {
+            if (!toggled) setToggled(true);
             setExpanded(!expanded);
-        };
+        }, [expanded, toggled]);
         
         return React.createElement(
             'header',
@@ -115,25 +116,25 @@
                 )
             )
         );
-    }
+    });
 
-    var Event = React.memo(function Event(props) {
-        var ref = React.useRef();
-        var prevSize = React.useRef({ width: 0, height: 0 });
+    const Event = React.memo(function Event(props) {
+        const ref = React.useRef();
+        const prevSize = React.useRef({ width: 0, height: 0 });
         
-        React.useLayoutEffect(function() {
+        React.useLayoutEffect(() => {
             if (!ref.current || !props.onSize) return;
             
-            var width = ref.current.offsetWidth;
-            var height = ref.current.offsetHeight;
+            const width = ref.current.offsetWidth;
+            const height = ref.current.offsetHeight;
             
             if (width !== prevSize.current.width || height !== prevSize.current.height) {
-                prevSize.current = { width: width, height: height };
-                props.onSize(props.id, { width: width, height: height });
+                prevSize.current = { width, height };
+                props.onSize(props.id, { width, height });
             }
         }, [props.onSize, props.id]);
         
-        var buttonChildren = [
+        const buttonChildren = [
             React.createElement('span', {
                 key: 'icon',
                 className: 'event__icon event__icon_' + props.icon,
@@ -163,7 +164,8 @@
         );
     });
 
-    var TABS = {
+    // Оптимизированные данные
+    const TABS = {
         all: {
             title: 'Все',
             items: [{
@@ -271,61 +273,58 @@
         }
     };
     
-    for (var i = 0; i < 6; i++) {
-        TABS.all.items = TABS.all.items.concat(TABS.all.items.slice());
+    // Эффективная генерация данных
+    const baseItems = TABS.all.items;
+    const newItems = [];
+    for (let i = 0; i < 64; i++) {
+        for (let j = 0; j < baseItems.length; j++) {
+            newItems.push(baseItems[j]);
+        }
     }
+    TABS.all.items = newItems;
     
-    var TABS_KEYS = Object.keys(TABS);
+    const TABS_KEYS = Object.keys(TABS);
 
+    // Оптимизированный главный компонент
     function Main() {
-        var _React$useState3 = React.useState(''),
-            activeTab = _React$useState3[0],
-            setActiveTab = _React$useState3[1];
+        const [activeTab, setActiveTab] = React.useState('');
+        const [hasRightScroll, setHasRightScroll] = React.useState(false);
+        const [sizes, setSizes] = React.useState({});
+        const [renderedTabs, setRenderedTabs] = React.useState({});
+        const containerRef = React.useRef();
+        const initialized = React.useRef(false);
         
-        var _React$useState4 = React.useState(false),
-            hasRightScroll = _React$useState4[0],
-            setHasRightScroll = _React$useState4[1];
-        
-        var _React$useState5 = React.useState({}),
-            sizes = _React$useState5[0],
-            setSizes = _React$useState5[1];
-        
-        var containerRef = React.useRef();
-        var initialized = React.useRef(false);
-        
-        React.useEffect(function() {
+        React.useEffect(() => {
             if (!initialized.current) {
                 initialized.current = true;
-                var params = new URLSearchParams(window.location.search);
+                const params = new URLSearchParams(window.location.search);
                 setActiveTab(params.get('tab') || 'all');
             }
         }, []);
         
-        var onSelectInput = function onSelectInput(event) {
+        const onSelectInput = React.useCallback(event => {
             setActiveTab(event.target.value);
-        };
+        }, []);
         
-        var handleSize = React.useCallback(function(id, size) {
-            setSizes(function(prev) {
+        const handleSize = React.useCallback((id, size) => {
+            setSizes(prev => {
                 if (prev[id] && prev[id].width === size.width && prev[id].height === size.height) {
                     return prev;
                 }
-                var newSizes = Object.assign({}, prev);
-                newSizes[id] = size;
-                return newSizes;
+                return {...prev, [id]: size};
             });
         }, []);
         
-        React.useLayoutEffect(function() {
+        React.useLayoutEffect(() => {
             if (!activeTab || !containerRef.current) return;
             
-            var panel = containerRef.current.querySelector('.section__panel:not(.section__panel_hidden)');
+            const panel = containerRef.current.querySelector('.section__panel:not(.section__panel_hidden)');
             if (!panel) return;
             
-            var totalWidth = 0;
-            var currentItems = TABS[activeTab].items;
-            for (var i = 0; i < currentItems.length; i++) {
-                var id = activeTab + '-' + i;
+            let totalWidth = 0;
+            const currentItems = TABS[activeTab].items;
+            for (let i = 0; i < currentItems.length; i++) {
+                const id = activeTab + '-' + i;
                 if (sizes[id]) {
                     totalWidth += sizes[id].width;
                 }
@@ -334,17 +333,17 @@
             setHasRightScroll(totalWidth > panel.clientWidth);
         }, [sizes, activeTab]);
         
-        var onArrowClick = function onArrowClick() {
-            var panel = containerRef.current.querySelector('.section__panel:not(.section__panel_hidden)');
+        const onArrowClick = React.useCallback(() => {
+            const panel = containerRef.current.querySelector('.section__panel:not(.section__panel_hidden)');
             if (panel) {
                 panel.scrollBy({ left: 400, behavior: 'smooth' });
             }
-        };
+        }, []);
         
-        var createDeviceElements = function createDeviceElements(tabKey) {
-            var items = TABS[tabKey].items;
-            return items.map(function(item, index) {
-                var id = tabKey + '-' + index;
+        const createDeviceElements = React.useCallback(tabKey => {
+            const items = TABS[tabKey].items;
+            return items.map((item, index) => {
+                const id = tabKey + '-' + index;
                 return React.createElement(Event, {
                     key: id,
                     id: id,
@@ -355,7 +354,17 @@
                     onSize: handleSize
                 });
             });
-        };
+        }, [handleSize]);
+        
+        // Кэширование рендеренных вкладок
+        React.useEffect(() => {
+            if (activeTab && !renderedTabs[activeTab]) {
+                setRenderedTabs(prev => ({
+                    ...prev,
+                    [activeTab]: createDeviceElements(activeTab)
+                }));
+            }
+        }, [activeTab, createDeviceElements, renderedTabs]);
         
         return React.createElement(
             'main',
@@ -518,19 +527,19 @@
                             value: activeTab || 'all',
                             onInput: onSelectInput
                         },
-                        TABS_KEYS.map(function(key) {
-                            return React.createElement(
+                        TABS_KEYS.map(key => 
+                            React.createElement(
                                 'option',
                                 { key: key, value: key },
                                 TABS[key].title
-                            );
-                        })
+                            )
+                        )
                     ),
                     React.createElement(
                         'ul',
                         { role: 'tablist', className: 'section__tabs' },
-                        TABS_KEYS.map(function(key) {
-                            return React.createElement(
+                        TABS_KEYS.map(key => 
+                            React.createElement(
                                 'li',
                                 {
                                     key: key,
@@ -539,18 +548,18 @@
                                     className: 'section__tab' + (key === activeTab ? ' section__tab_active' : ''),
                                     id: 'tab_' + key,
                                     'aria-controls': 'panel_' + key,
-                                    onClick: function() { return setActiveTab(key); }
+                                    onClick: () => setActiveTab(key)
                                 },
                                 TABS[key].title
-                            );
-                        })
+                            )
+                        )
                     )
                 ),
                 React.createElement(
                     'div',
                     { className: 'section__panel-wrapper', ref: containerRef },
-                    TABS_KEYS.map(function(key) {
-                        return React.createElement(
+                    TABS_KEYS.map(key => 
+                        React.createElement(
                             'div',
                             {
                                 key: key,
@@ -563,10 +572,10 @@
                             React.createElement(
                                 'ul',
                                 { className: 'section__panel-list' },
-                                key === activeTab ? createDeviceElements(key) : null
+                                renderedTabs[key] || null
                             )
-                        );
-                    }),
+                        )
+                    ),
                     hasRightScroll && React.createElement('div', {
                         className: 'section__arrow',
                         onClick: onArrowClick
@@ -577,7 +586,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-        var root = ReactDOM.createRoot(document.getElementById('app'));
+        const root = ReactDOM.createRoot(document.getElementById('app'));
         root.render(React.createElement(React.Fragment, null,
             React.createElement(Header, null),
             React.createElement(Main, null)
