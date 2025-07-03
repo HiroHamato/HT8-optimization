@@ -251,6 +251,10 @@ function createHeader() {
           : "Закрыть меню";
         linksList.classList.toggle("header__links_opened", !expanded);
 
+        if (!this.dataset.toggled) {
+          this.dataset.toggled = true;
+          linksList.classList.add("header__links-toggled");
+        }
       },
     },
     [
