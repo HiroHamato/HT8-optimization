@@ -404,16 +404,14 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         });
         
-        setTimeout(() => {
-            checkScrollNeeded();
-            window.addEventListener("resize", checkScrollNeeded);
-            
-            const params = new URLSearchParams(window.location.search);
-            const urlTab = params.get("tab");
-            if (urlTab && TABS_KEYS.includes(urlTab)) {
-                setActiveTab(urlTab);
-            }
-        }, 100);
+        checkScrollNeeded();
+        window.addEventListener("resize", checkScrollNeeded);
+        
+        const params = new URLSearchParams(window.location.search);
+        const urlTab = params.get("tab");
+        if (urlTab && TABS_KEYS.includes(urlTab)) {
+            setActiveTab(urlTab);
+        }
         
         return main;
     }
