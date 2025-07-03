@@ -469,7 +469,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const panel = document.querySelector(`#panel_${tabKey}`);
     const list = panel.querySelector(".section__panel-list");
 
+    if (list.children.length > 0) {
       list.innerHTML = "";
+    }
 
     const fragment = document.createDocumentFragment();
 
