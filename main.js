@@ -586,7 +586,7 @@
   }
 
   document.addEventListener("DOMContentLoaded", function () {
-    const root = ReactDOM.createRoot(document.getElementById("app"));
+    const setTimeout(()=>{M(),window.addEventListener("resize",M);let e=new URLSearchParams(window.location.search),t=e.get("tab");t&&l.includes(t)&&P(t)},0)root = ReactDOM.createRoot(document.getElementById("app"));
     root.render(
       React.createElement(
         React.Fragment,
